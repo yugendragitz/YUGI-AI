@@ -1,0 +1,159 @@
+# =============================================================================
+# YUGI-AI — Development Docker Compose
+# =============================================================================
+# Development-specific configuration with:
+#   - Hot reload via volume mounts
+#   - Exposed ports for direct access and debugging
+#   - No NGINX (access services directly)
+#   - Relaxed resource limits
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# Access:
+#   Frontend:   http://localhost:3000
+#   Backend:    http://localhost:8000
+#   API Docs:   http://localhost:8000/docs
+#   PostgreSQL: localhost:5432
+#   Redis:      localhost:6379
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend — FastAPI with hot reload
+  # Mounts source code for live reloading during development.
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: yugi-backend-dev
+    environment:
+      - ENVIRONMENT=development
+      - POSTGRES_USER=${POSTGRES_USER:-yugi}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-yugi_dev_password}
+      - POSTGRES_DB=${POSTGRES_DB:-yugi_ai}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-do-not-use-in-production-change-me}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dev-encryption-key-not-for-production-use}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - REFRESH_TOKEN_EXPIRE_DAYS=30
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+      - LOG_LEVEL=DEBUG
+      - BACKEND_WORKERS=1
+    volumes:
+      # Mount source code for hot reload
+      # Changes in backend/app/ are reflected immediately
+      - ./backend/app:/app/app:cached
+      - ./backend/alembic:/app/alembic:cached
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - yugi-dev-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Next.js with hot reload
+  # Mounts source code for Fast Refresh during development.
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: yugi-frontend-dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
+      - NEXT_PUBLIC_APP_NAME=YUGI-AI
+      - NEXT_PUBLIC_APP_VERSION=0.1.0-dev
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Mount source code for Fast Refresh
+      - ./frontend/src:/app/src:cached
+      - ./frontend/public:/app/public:cached
+      # Exclude node_modules — use container's installed deps
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - yugi-dev-network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Development Database
+  # Port exposed for direct connection from host (pgAdmin, DBeaver, etc.)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: yugi-postgres-dev
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-yugi}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-yugi_dev_password}
+      - POSTGRES_DB=${POSTGRES_DB:-yugi_ai}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yugi} -d ${POSTGRES_DB:-yugi_ai}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - yugi-dev-network
+
+  # ---------------------------------------------------------------------------
+  # Redis — Development Cache
+  # Port exposed for direct connection from host (RedisInsight, redis-cli).
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: yugi-redis-dev
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - yugi-dev-network
+
+# =============================================================================
+# Volumes — Development data persistence
+# =============================================================================
+volumes:
+  postgres_dev_data:
+    driver: local
+    name: yugi-postgres-dev-data
+  redis_dev_data:
+    driver: local
+    name: yugi-redis-dev-data
+
+# =============================================================================
+# Networks — Development network
+# =============================================================================
+networks:
+  yugi-dev-network:
+    driver: bridge
+    name: yugi-dev-network

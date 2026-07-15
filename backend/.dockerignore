@@ -1,0 +1,52 @@
+# =============================================================================
+# YUGI-AI Backend — Docker Build Ignore
+# =============================================================================
+# Excludes files from the Docker build context to:
+#   - Speed up builds (smaller context = faster COPY)
+#   - Prevent sensitive files from entering images
+#   - Avoid cache invalidation from irrelevant changes
+# =============================================================================
+
+# Version control
+.git
+.gitignore
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Test files (not needed in production image)
+tests/
+.coverage
+htmlcov/
+coverage.xml
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Environment files (secrets must come from env vars, not files in image)
+.env
+.env.local
+.env.*.local
+
+# Docker files (prevent recursive context)
+Dockerfile
+.dockerignore
+docker-compose*.yml

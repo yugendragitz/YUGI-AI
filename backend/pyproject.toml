@@ -1,0 +1,221 @@
+# =============================================================================
+# YUGI-AI Backend — Python Project Configuration
+# =============================================================================
+# Modern Python project configuration using pyproject.toml (PEP 621).
+# All dependencies, tools, and metadata in a single file.
+#
+# Install:
+#   pip install -e .           # Production dependencies
+#   pip install -e ".[dev]"    # Production + development dependencies
+# =============================================================================
+
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yugi-ai-backend"
+version = "0.1.0"
+description = "YUGI-AI — The AI Operating System Backend"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+authors = [
+    {name = "YUGI-AI Team"},
+]
+keywords = ["ai", "operating-system", "fastapi", "websocket"]
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+# Version constraints follow semantic versioning:
+#   >=X.Y.Z : minimum version (includes bug fixes and new features)
+#   <X+1.0.0: excludes next major version (breaking changes)
+# =============================================================================
+dependencies = [
+    # --- Web Framework ---
+    # FastAPI: async web framework with automatic OpenAPI docs
+    "fastapi>=0.115.0,<1.0.0",
+
+    # Uvicorn: ASGI server with HTTP/1.1 and WebSocket support
+    # [standard] includes uvloop (Linux) and httptools for performance
+    "uvicorn[standard]>=0.32.0,<1.0.0",
+
+    # --- Real-Time Communication ---
+    # python-socketio: Socket.IO server for WebSocket + polling fallback
+    "python-socketio>=5.11.0,<6.0.0",
+
+    # --- Database ---
+    # SQLAlchemy 2.0: async ORM with native PostgreSQL support
+    "sqlalchemy[asyncio]>=2.0.0,<3.0.0",
+
+    # asyncpg: high-performance async PostgreSQL driver
+    "asyncpg>=0.30.0,<1.0.0",
+
+    # Alembic: database migration management
+    "alembic>=1.14.0,<2.0.0",
+
+    # --- Validation & Settings ---
+    # Pydantic v2: data validation using Python type hints
+    "pydantic>=2.10.0,<3.0.0",
+
+    # Pydantic Settings: environment variable management
+    "pydantic-settings>=2.6.0,<3.0.0",
+
+    # --- Authentication ---
+    # python-jose: JWT token creation and verification
+    # [cryptography] backend for HMAC-SHA256 signing
+    "python-jose[cryptography]>=3.3.0,<4.0.0",
+
+    # passlib: password hashing abstraction
+    # [bcrypt] for bcrypt algorithm support
+    "passlib[bcrypt]>=1.7.4,<2.0.0",
+
+    # bcrypt: C-based bcrypt implementation
+    "bcrypt>=4.2.0,<5.0.0",
+
+    # --- Cache & Message Broker ---
+    # redis: async Redis client for cache, sessions, pub/sub
+    "redis>=5.2.0,<6.0.0",
+
+    # --- HTTP Client ---
+    # httpx: async HTTP client for external API calls (AI providers)
+    "httpx>=0.28.0,<1.0.0",
+
+    # --- AI Providers ---
+    # openai: Official OpenAI SDK (async support)
+    "openai>=1.57.0,<2.0.0",
+
+    # --- Logging ---
+    # structlog: structured, key-value logging with processor pipeline
+    "structlog>=24.4.0,<26.0.0",
+
+    # --- Security ---
+    # cryptography: Fernet symmetric encryption for BYOK key storage
+    "cryptography>=44.0.0,<46.0.0",
+
+    # --- Utilities ---
+    # python-multipart: required by FastAPI for form data / file uploads
+    "python-multipart>=0.0.12",
+
+    # python-dotenv: load .env files in development
+    "python-dotenv>=1.0.0,<2.0.0",
+
+    # email-validator: email format validation for user registration
+    "email-validator>=2.2.0,<3.0.0",
+]
+
+# =============================================================================
+# Development Dependencies
+# =============================================================================
+[project.optional-dependencies]
+dev = [
+    # --- Testing ---
+    # pytest: test framework
+    "pytest>=8.3.0,<9.0.0",
+
+    # pytest-asyncio: async test support
+    "pytest-asyncio>=0.24.0,<1.0.0",
+
+    # pytest-cov: coverage reporting
+    "pytest-cov>=6.0.0,<7.0.0",
+
+    # --- Linting & Formatting ---
+    # ruff: extremely fast Python linter + formatter (replaces flake8, black, isort)
+    "ruff>=0.8.0",
+
+    # --- Type Checking ---
+    # mypy: static type checker
+    "mypy>=1.13.0,<2.0.0",
+
+    # --- HTTP Test Client ---
+    # httpx is used by FastAPI's TestClient for async testing
+    # (already in main deps, but listed here for clarity)
+]
+
+# =============================================================================
+# Tool Configuration
+# =============================================================================
+
+# --- Ruff (Linter + Formatter) ---
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+# Select rule sets
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort (import sorting)
+    "N",      # pep8-naming
+    "UP",     # pyupgrade (modern Python patterns)
+    "B",      # flake8-bugbear (common bugs)
+    "SIM",    # flake8-simplify (code simplification)
+    "ASYNC",  # flake8-async (async best practices)
+    "S",      # flake8-bandit (security)
+    "T20",    # flake8-print (no print statements)
+    "RET",    # flake8-return (return statement best practices)
+    "PTH",    # flake8-use-pathlib (prefer pathlib over os.path)
+]
+ignore = [
+    "S101",   # Allow assert in tests
+    "B008",   # Allow function calls in default arguments (FastAPI Depends)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/tests/**/*.py" = ["S101", "S106"]  # Allow assert and hardcoded passwords in tests
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+# --- MyPy (Type Checker) ---
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+# --- Pytest ---
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+# --- Coverage ---
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/tests/*",
+    "app/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError",
+    "@abstractmethod",
+]
+show_missing = true
+fail_under = 0  # Will increase as we add tests
+
+# --- Setuptools ---
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]

@@ -1,0 +1,156 @@
+# =============================================================================
+# YUGI-AI — Git Ignore Rules
+# =============================================================================
+# This file prevents secrets, caches, build artifacts, and IDE-specific files
+# from being committed to version control.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment & Secrets
+# CRITICAL: .env files contain secrets. Only .env.example files are committed.
+# -----------------------------------------------------------------------------
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# SSL certificates and private keys
+*.pem
+*.key
+*.crt
+*.csr
+ssl/
+certs/
+
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+sdist/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Type checking & linting caches
+.mypy_cache/
+.ruff_cache/
+.pytype/
+
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Distribution
+*.whl
+*.tar.gz
+
+# -----------------------------------------------------------------------------
+# Node.js / Next.js
+# -----------------------------------------------------------------------------
+node_modules/
+.next/
+out/
+.turbo/
+.vercel/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+
+# Storybook build
+storybook-static/
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
+# Allow override file to be local-only
+docker-compose.override.yml
+
+# Docker volumes (if mounted locally)
+.docker-data/
+pgdata/
+redisdata/
+
+# -----------------------------------------------------------------------------
+# IDE & Editors
+# -----------------------------------------------------------------------------
+# VSCode (allow shared settings)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# JetBrains (IntelliJ, PyCharm, WebStorm)
+.idea/
+
+# Vim
+*.swp
+*.swo
+*~
+Session.vim
+.netrwhist
+
+# Emacs
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# -----------------------------------------------------------------------------
+# Operating System
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# -----------------------------------------------------------------------------
+# Logs & Runtime
+# -----------------------------------------------------------------------------
+logs/
+*.log
+*.pid
+*.seed
+
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage reports
+coverage/
+*.lcov
