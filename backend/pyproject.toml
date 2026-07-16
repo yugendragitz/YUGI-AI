@@ -166,6 +166,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "app/tests/**/*.py" = ["S101", "S106"]  # Allow assert and hardcoded passwords in tests
+"app/core/exceptions.py" = ["N818"]     # AppException naming is intentional (not "AppError")
 
 [tool.ruff.format]
 quote-style = "double"
