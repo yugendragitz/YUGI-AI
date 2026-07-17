@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field
 
 from app.api.dependencies import container
 from app.infrastructure.database import DatabaseManager
+from app.infrastructure.redis import RedisManager
 
 logger = structlog.get_logger(__name__)
 
@@ -116,11 +117,13 @@ async def health_check(
     db_ok = await db_manager.check_connectivity()
     db_status = "connected" if db_ok else "disconnected"
 
-    # TODO: Add Redis check when Redis infrastructure is implemented
-    redis_status = "not_configured"
+    # Check redis
+    redis_manager: RedisManager = container.get_redis_manager()
+    redis_ok = await redis_manager.check_connectivity()
+    redis_status = "connected" if redis_ok else "disconnected"
 
     # Determine overall status
-    overall = "healthy" if db_ok else "degraded"
+    overall = "healthy" if (db_ok and redis_ok) else "degraded"
 
     return HealthResponse(
         status=overall,
@@ -160,8 +163,8 @@ async def readiness_probe(
     db_ok = await db_manager.check_connectivity()
     db_status = "connected" if db_ok else "disconnected"
 
-    # TODO: Add Redis check
-    redis_ok = True  # Placeholder until Redis infra is built
+    redis_manager: RedisManager = container.get_redis_manager()
+    redis_ok = await redis_manager.check_connectivity()
     redis_status = "connected" if redis_ok else "disconnected"
 
     all_healthy = db_ok and redis_ok

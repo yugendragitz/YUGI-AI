@@ -53,6 +53,7 @@ class BaseEntity:
     id: EntityId = field(default_factory=uuid.uuid4)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = field(default=None)
+    deleted_at: datetime | None = field(default=None)
 
     def __eq__(self, other: object) -> bool:
         """Two entities are equal if they have the same ID."""
@@ -74,6 +75,19 @@ class BaseEntity:
         Call this in service methods when modifying an entity.
         """
         self.updated_at = datetime.now(UTC)
+
+    def soft_delete(self) -> None:
+        """Mark this entity as soft-deleted.
+
+        Sets deleted_at to current UTC time. The entity remains in the database
+        but is excluded from standard queries via repository filters.
+        """
+        self.deleted_at = datetime.now(UTC)
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if this entity has been soft-deleted."""
+        return self.deleted_at is not None
 
 
 # =============================================================================

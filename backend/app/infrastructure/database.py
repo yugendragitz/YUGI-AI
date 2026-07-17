@@ -110,6 +110,10 @@ class Base(DeclarativeBase):
         onupdate=lambda: datetime.now(UTC),
         comment="Last update timestamp (UTC)",
     )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        default=None,
+        comment="Soft delete timestamp (UTC). NULL = active.",
+    )
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.id}>"

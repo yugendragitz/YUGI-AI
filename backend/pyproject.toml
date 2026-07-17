@@ -68,11 +68,11 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0,<4.0.0",
 
     # passlib: password hashing abstraction
-    # [bcrypt] for bcrypt algorithm support
-    "passlib[bcrypt]>=1.7.4,<2.0.0",
+    "passlib>=1.7.4,<2.0.0",
 
-    # bcrypt: C-based bcrypt implementation
-    "bcrypt>=4.2.0,<5.0.0",
+    # argon2-cffi: Argon2id password hashing (OWASP recommended)
+    # Memory-hard algorithm resistant to GPU/ASIC attacks
+    "argon2-cffi>=23.1.0,<25.0.0",
 
     # --- Cache & Message Broker ---
     # redis: async Redis client for cache, sessions, pub/sub

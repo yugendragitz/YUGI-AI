@@ -65,16 +65,97 @@ MIN_PAGE_SIZE = 1
 
 
 # =============================================================================
-# Security
+# Password Hashing (Argon2id — OWASP recommended)
 # =============================================================================
-BCRYPT_ROUNDS = 12
-"""Number of bcrypt hashing rounds. 12 is ~250ms on modern hardware."""
+ARGON2_TIME_COST = 3
+"""Number of iterations. OWASP minimum: 1. We use 3 for stronger protection."""
 
-MIN_PASSWORD_LENGTH = 8
-"""Minimum password length enforced during registration."""
+ARGON2_MEMORY_COST = 65536
+"""Memory in KiB (64 MB). OWASP minimum: 47104 KiB (46 MiB)."""
+
+ARGON2_PARALLELISM = 4
+"""Number of parallel threads. Matches typical server CPU core count."""
+
+
+# =============================================================================
+# Password Policy
+# =============================================================================
+MIN_PASSWORD_LENGTH = 12
+"""Minimum password length. Exceeds NIST 800-63B minimum (8)."""
 
 MAX_PASSWORD_LENGTH = 128
-"""Maximum password length. Prevents bcrypt DoS (bcrypt truncates at 72 bytes)."""
+"""Maximum password length. Argon2 handles any length (no truncation)."""
+
+PASSWORD_REQUIRE_UPPERCASE = True
+"""Require at least one uppercase letter (A-Z)."""
+
+PASSWORD_REQUIRE_LOWERCASE = True
+"""Require at least one lowercase letter (a-z)."""
+
+PASSWORD_REQUIRE_DIGIT = True
+"""Require at least one digit (0-9)."""
+
+PASSWORD_REQUIRE_SPECIAL = True
+"""Require at least one special character."""
+
+PASSWORD_SPECIAL_CHARS = r"!@#$%^&*()_+\-=\[\]{}|;:'\",.<>?/~`"  # noqa: S105
+"""Allowed special characters for password validation."""
+
+
+# =============================================================================
+# Rate Limiting
+# =============================================================================
+RATE_LIMIT_AUTH_ATTEMPTS = 5
+"""Maximum login/register attempts per window."""
+
+RATE_LIMIT_AUTH_WINDOW_SECONDS = 900
+"""Rate limit window for auth endpoints (15 minutes)."""
+
+RATE_LIMIT_REFRESH_ATTEMPTS = 10
+"""Maximum token refresh attempts per window."""
+
+RATE_LIMIT_REFRESH_WINDOW_SECONDS = 60
+"""Rate limit window for refresh endpoint (1 minute)."""
+
+RATE_LIMIT_API_REQUESTS = 100
+"""Maximum authenticated API requests per window."""
+
+RATE_LIMIT_API_WINDOW_SECONDS = 60
+"""Rate limit window for general API (1 minute)."""
+
+
+# =============================================================================
+# User Roles (RBAC)
+# =============================================================================
+class UserRole(StrEnum):
+    """User roles for role-based access control.
+
+    Phase 1: All users get USER role. Admin created via CLI/migration.
+    Future: Admin panel for role management.
+    """
+
+    USER = "user"
+    MODERATOR = "moderator"
+    ADMIN = "admin"
+
+
+# =============================================================================
+# Audit Event Types
+# =============================================================================
+class AuditEventType(StrEnum):
+    """Authentication audit event identifiers.
+
+    Every auth action is logged to the audit_logs table with one of these types.
+    """
+
+    USER_REGISTERED = "USER_REGISTERED"
+    LOGIN_SUCCESS = "LOGIN_SUCCESS"
+    LOGIN_FAILED = "LOGIN_FAILED"
+    TOKEN_REFRESHED = "TOKEN_REFRESHED"  # noqa: S105
+    SUSPICIOUS_REFRESH = "SUSPICIOUS_REFRESH"
+    USER_LOGGED_OUT = "USER_LOGGED_OUT"
+    ALL_SESSIONS_REVOKED = "ALL_SESSIONS_REVOKED"
+    PASSWORD_CHANGED = "PASSWORD_CHANGED"  # noqa: S105
 
 
 # =============================================================================

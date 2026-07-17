@@ -42,8 +42,11 @@ from app.core.constants import APP_CONTACT, APP_DESCRIPTION, APP_LICENSE, APP_NA
 from app.core.logging import setup_logging
 from app.core.telemetry import setup_telemetry, shutdown_telemetry
 from app.infrastructure.database import DatabaseManager
+from app.infrastructure.rate_limiter import RateLimiter
+from app.infrastructure.redis import RedisManager
 from app.middleware.correlation_id import CorrelationIdMiddleware
 from app.middleware.exception_handler import register_exception_handlers
+from app.middleware.rate_limiter import RateLimitMiddleware
 
 logger = structlog.get_logger(__name__)
 
@@ -151,17 +154,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Don't crash on startup — health endpoints will report degraded status
         # This allows the container to stay alive for debugging
 
-    # 3. Initialize DI container
+    # 3. Initialize Redis
+    redis_manager = RedisManager(settings.redis)
+    await redis_manager.connect()
+
+    # 4. Initialize Rate Limiter
+    rate_limiter = RateLimiter(redis_manager.client)
+
+    # 5. Initialize DI container
     container.init(
         settings=settings,
         db_manager=db_manager,
+        redis_manager=redis_manager,
+        rate_limiter=rate_limiter,
     )
     logger.info("  ✓ DI container initialized")
 
-    # 4. Setup OpenTelemetry (no-op if disabled)
+    # 6. Setup OpenTelemetry (no-op if disabled)
     setup_telemetry(app, settings)
 
-    # 5. Record start time
+    # 7. Record start time
     set_start_time()
 
     logger.info(
@@ -183,7 +195,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await db_manager.disconnect()
     logger.info("  ✓ Database disconnected")
 
-    # 3. TODO: Close Redis connection when Redis infra is implemented
+    # 3. Disconnect Redis
+    await redis_manager.disconnect()
 
     logger.info(f"  {APP_NAME} Backend — Shutdown complete")
 
@@ -232,6 +245,10 @@ def create_app() -> FastAPI:
 
     # 3. Correlation ID — generates/extracts request ID, binds to structlog
     app.add_middleware(CorrelationIdMiddleware)
+
+    # 4. Rate Limiter — must run after Correlation ID so logs have request ID
+    # Fetches rate_limiter from container lazily per request
+    app.add_middleware(RateLimitMiddleware)
 
     # ---- Exception Handlers ----
     register_exception_handlers(app, settings)

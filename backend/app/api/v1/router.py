@@ -20,6 +20,7 @@ Current routes:
 
 from fastapi import APIRouter
 
+from app.api.v1.auth.router import router as auth_router
 from app.api.v1.health import router as health_router
 from app.core.constants import API_V1_PREFIX
 
@@ -38,10 +39,10 @@ v1_router.include_router(
 )
 
 # ---------------------------------------------------------------------------
-# Future Module Routers (uncomment as modules are implemented)
+# Module Routers
 # ---------------------------------------------------------------------------
-# from app.api.v1.auth import router as auth_router
-# v1_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+v1_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 
 # from app.api.v1.console import router as console_router
 # v1_router.include_router(console_router, prefix="/console", tags=["AI Console"])

@@ -43,10 +43,19 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 
 import structlog
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.auth.audit_service import AuditService
+from app.application.auth.auth_service import AuthService
+from app.application.auth.password_service import PasswordService
 from app.core.config import AppSettings
+from app.infrastructure.auth.audit_repository import PostgresAuditLogRepository
+from app.infrastructure.auth.session_repository import PostgresSessionRepository
+from app.infrastructure.auth.user_repository import PostgresUserRepository
 from app.infrastructure.database import DatabaseManager
+from app.infrastructure.rate_limiter import RateLimiter
+from app.infrastructure.redis import RedisManager
 
 
 class _Container:
@@ -63,6 +72,8 @@ class _Container:
     def __init__(self) -> None:
         self._settings: AppSettings | None = None
         self._db_manager: DatabaseManager | None = None
+        self._redis_manager: RedisManager | None = None
+        self._rate_limiter: RateLimiter | None = None
         self._initialized: bool = False
 
     def init(
@@ -70,6 +81,8 @@ class _Container:
         *,
         settings: AppSettings,
         db_manager: DatabaseManager,
+        redis_manager: RedisManager,
+        rate_limiter: RateLimiter,
     ) -> None:
         """Initialize the container with singleton dependencies.
 
@@ -78,9 +91,13 @@ class _Container:
         Args:
             settings: Validated application settings.
             db_manager: Connected database manager.
+            redis_manager: Connected Redis manager.
+            rate_limiter: Configured rate limiter.
         """
         self._settings = settings
         self._db_manager = db_manager
+        self._redis_manager = redis_manager
+        self._rate_limiter = rate_limiter
         self._initialized = True
 
     def _check_initialized(self) -> None:
@@ -115,6 +132,18 @@ class _Container:
         self._check_initialized()
         assert self._db_manager is not None  # noqa: S101
         return self._db_manager
+
+    def get_redis_manager(self) -> RedisManager:
+        """Get the Redis manager singleton."""
+        self._check_initialized()
+        assert self._redis_manager is not None  # noqa: S101
+        return self._redis_manager
+
+    def get_rate_limiter(self) -> RateLimiter:
+        """Get the rate limiter singleton."""
+        self._check_initialized()
+        assert self._rate_limiter is not None  # noqa: S101
+        return self._rate_limiter
 
     # =========================================================================
     # Request-Scoped Dependencies (per-request via Depends)
@@ -156,3 +185,27 @@ class _Container:
 # Initialized in main.py lifespan, accessed in route handlers via Depends().
 
 container = _Container()
+
+
+# =============================================================================
+# Standalone Dependencies (FastAPI Depends)
+# =============================================================================
+
+
+async def get_auth_service(
+    session: AsyncSession = Depends(container.get_session),
+) -> AuthService:
+    """Dependency that provides a fully configured AuthService."""
+    user_repo = PostgresUserRepository(session)
+    session_repo = PostgresSessionRepository(session)
+    audit_repo = PostgresAuditLogRepository(session)
+
+    password_svc = PasswordService()
+    audit_svc = AuditService(audit_repo)
+
+    return AuthService(
+        user_repo=user_repo,
+        session_repo=session_repo,
+        password_svc=password_svc,
+        audit_svc=audit_svc,
+    )
