@@ -82,9 +82,10 @@ async def get_current_user(
     Raises:
         UnauthorizedException: If user not found, inactive, or deleted.
     """
+    from uuid import UUID
+
     from app.api.dependencies import container
     from app.infrastructure.auth.user_repository import PostgresUserRepository
-    from uuid import UUID
 
     # Get a single use session from the container
     db_manager = container.get_db_manager()

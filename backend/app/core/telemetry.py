@@ -47,8 +47,12 @@ _HAS_OPENTELEMETRY = False
 
 try:
     from opentelemetry import trace  # type: ignore[import-not-found]
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter  # type: ignore[import-not-found]
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore[import-not-found]
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+        OTLPSpanExporter,  # type: ignore[import-not-found]
+    )
+    from opentelemetry.instrumentation.fastapi import (
+        FastAPIInstrumentor,  # type: ignore[import-not-found]
+    )
     from opentelemetry.sdk.resources import Resource  # type: ignore[import-not-found]
     from opentelemetry.sdk.trace import TracerProvider  # type: ignore[import-not-found]
     from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore[import-not-found]
@@ -62,7 +66,9 @@ except ImportError:
 # Optional instrumentors — each guarded independently so partial installs work
 _HAS_HTTPX_INSTRUMENTOR = False
 try:
-    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor  # type: ignore[import-not-found]
+    from opentelemetry.instrumentation.httpx import (
+        HTTPXClientInstrumentor,  # type: ignore[import-not-found]
+    )
 
     _HAS_HTTPX_INSTRUMENTOR = True
 except ImportError:
@@ -70,7 +76,9 @@ except ImportError:
 
 _HAS_SQLALCHEMY_INSTRUMENTOR = False
 try:
-    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor  # type: ignore[import-not-found]
+    from opentelemetry.instrumentation.sqlalchemy import (
+        SQLAlchemyInstrumentor,  # type: ignore[import-not-found]
+    )
 
     _HAS_SQLALCHEMY_INSTRUMENTOR = True
 except ImportError:
