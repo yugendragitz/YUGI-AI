@@ -53,6 +53,7 @@ router = APIRouter()
 def _extract_device_info(request: Request) -> DeviceInfo:
     """Extract device metadata from the incoming request."""
     forwarded = request.headers.get("x-forwarded-for")
+    ip: str | None = None
     if forwarded:
         ip = forwarded.split(",")[0].strip()
     else:

@@ -79,21 +79,18 @@ async def get_current_user(
 ) -> User:
     """Load the full authenticated user from the database.
 
-    This dependency:
-    1. Extracts and validates the JWT (via get_token_payload)
-    2. Loads the user from PostgreSQL by ID
-    3. Verifies the user is active and not soft-deleted
-
     Raises:
         UnauthorizedException: If user not found, inactive, or deleted.
     """
     from app.api.dependencies import container
-
-    user_repo = container.get_user_repository()
-
+    from app.infrastructure.auth.user_repository import PostgresUserRepository
     from uuid import UUID
 
-    user = await user_repo.get_by_id(UUID(payload.sub))
+    # Get a single use session from the container
+    db_manager = container.get_db_manager()
+    async for session in db_manager.session():
+        user_repo = PostgresUserRepository(session)
+        user = await user_repo.get_by_id(UUID(payload.sub))
 
     if user is None:
         logger.warning("Token valid but user not found", user_id=payload.sub)
@@ -122,38 +119,10 @@ async def get_current_user(
 async def require_active_user(
     user: User = Depends(get_current_user),
 ) -> User:
-    """Ensure the current user is active.
-
-    This is an alias for get_current_user (which already checks is_active),
-    but provides a semantically clear dependency name for routes that
-    explicitly require an active user.
-    """
     return user
 
 
 def require_role(*allowed_roles: UserRole):
-    """Create a dependency that checks the user's role against allowed roles.
-
-    This is a dependency FACTORY — it returns a dependency function.
-    Use it in route definitions:
-
-        @router.get("/admin/dashboard")
-        async def admin_dashboard(
-            user: User = Depends(require_role(UserRole.ADMIN)),
-        ): ...
-
-        @router.delete("/users/{user_id}")
-        async def delete_user(
-            user: User = Depends(require_role(UserRole.ADMIN, UserRole.MODERATOR)),
-        ): ...
-
-    Args:
-        *allowed_roles: One or more UserRole values that are permitted.
-
-    Returns:
-        FastAPI dependency function that validates the user's role.
-    """
-
     async def _role_guard(
         user: User = Depends(get_current_user),
     ) -> User:

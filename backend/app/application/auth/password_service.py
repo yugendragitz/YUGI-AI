@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import re
 
-from passlib.hash import argon2
+from passlib.hash import argon2  # type: ignore[import-untyped]
 
 from app.core.constants import (
     ARGON2_MEMORY_COST,
@@ -67,7 +67,7 @@ class PasswordService:
         Returns:
             Argon2id hash string (includes algorithm parameters and salt).
         """
-        return self._hasher.hash(plain_password)
+        return str(self._hasher.hash(plain_password))
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against an Argon2id hash.
@@ -82,7 +82,7 @@ class PasswordService:
             True if the password matches, False otherwise.
         """
         try:
-            return self._hasher.verify(plain_password, hashed_password)
+            return bool(self._hasher.verify(plain_password, hashed_password))
         except Exception:
             # Malformed hash string — treat as non-match
             return False

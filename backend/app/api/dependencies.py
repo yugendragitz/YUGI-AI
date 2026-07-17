@@ -175,7 +175,7 @@ class _Container:
         Returns:
             BoundLogger with request context.
         """
-        return structlog.get_logger("api")
+        return structlog.get_logger("api")  # type: ignore[no-any-return]
 
 
 # =============================================================================

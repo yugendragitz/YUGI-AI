@@ -132,7 +132,7 @@ class UserModel(Base):
 # Override table args with proper partial index expressions
 # SQLAlchemy requires text() for WHERE clauses in Index
 
-UserModel.__table_args__ = (
+UserModel.__table_args__ = (  # type: ignore[assignment]
     Index(
         "ix_users_email_active",
         "email",

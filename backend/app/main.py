@@ -96,7 +96,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "camera=(), microphone=(self), geolocation=(), payment=()"
         )
 
-        return response
+        return response  # type: ignore[no-any-return]
 
 
 # =============================================================================

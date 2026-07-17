@@ -89,6 +89,7 @@ def setup_logging(log_level: str = "INFO", log_format: str = "console") -> None:
         log_format: Output format — "json" for production, "console" for development.
     """
     # Determine the renderer based on format
+    renderer: structlog.processors.JSONRenderer | structlog.dev.ConsoleRenderer
     if log_format == "json":
         renderer = structlog.processors.JSONRenderer()
     else:
@@ -175,4 +176,4 @@ def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
         logger = get_logger(__name__)
         logger.info("Processing request", endpoint="/api/v1/health")
     """
-    return structlog.get_logger(name)
+    return structlog.get_logger(name)  # type: ignore[no-any-return]

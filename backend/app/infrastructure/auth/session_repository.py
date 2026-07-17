@@ -158,7 +158,7 @@ class PostgresSessionRepository(SessionRepository):
             .values(is_revoked=True, updated_at=now)
         )
         result = await self._session.execute(stmt)
-        revoked = result.rowcount
+        revoked = result.rowcount  # type: ignore[attr-defined]
         await self._session.flush()
 
         logger.info(
@@ -166,7 +166,7 @@ class PostgresSessionRepository(SessionRepository):
             user_id=str(user_id),
             count=revoked,
         )
-        return revoked
+        return int(revoked)
 
     async def cleanup_expired(self) -> int:
         """Soft-delete expired sessions (housekeeping)."""
@@ -180,12 +180,12 @@ class PostgresSessionRepository(SessionRepository):
             .values(deleted_at=now)
         )
         result = await self._session.execute(stmt)
-        cleaned = result.rowcount
+        cleaned = result.rowcount  # type: ignore[attr-defined]
         await self._session.flush()
 
         if cleaned > 0:
             logger.info("Expired sessions cleaned up", count=cleaned)
-        return cleaned
+        return int(cleaned)
 
     # =========================================================================
     # Entity ↔ Model Mapping

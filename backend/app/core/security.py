@@ -27,7 +27,7 @@ from typing import Any
 
 import structlog
 from cryptography.fernet import Fernet, InvalidToken
-from jose import JWTError, jwt
+from jose import JWTError, jwt  # type: ignore[import-untyped]
 from pydantic import BaseModel
 
 from app.core.config import get_settings
@@ -94,10 +94,12 @@ def create_access_token(
         "exp": int((now + expires_delta).timestamp()),
     }
 
-    return jwt.encode(
-        claims,
-        settings.auth.secret_key,
-        algorithm=settings.auth.jwt_algorithm,
+    return str(
+        jwt.encode(
+            claims,
+            settings.auth.secret_key,
+            algorithm=settings.auth.jwt_algorithm,
+        )
     )
 
 

@@ -101,6 +101,6 @@ class RedisManager:
         if self._client is None:
             return False
         try:
-            return await self._client.ping()
+            return bool(await self._client.ping())
         except Exception:
             return False
